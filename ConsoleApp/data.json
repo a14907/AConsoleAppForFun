@@ -1,17 +1,22 @@
 ﻿{
-  "productPictures": [
-    "gemall_20170915144848_375487b3-5b91-4655-ad97-ffce29205bc9.png",
-    "gemall_20170915144854_49c4a9c9-c401-48da-bf18-4de17cb338fe.png"
+  "storeUID": "f3f64d2e-2fcf-467f-a72c-9adf4296b45f",
+  "totalAmount": 88.00,
+  "salesOutletType": 1,
+  "deliveryFee": 11.00,
+  "deliverMethodType": 4,
+  "remark": "09/20,11:45&&",
+  "logisticsContactInfoUID": "5fc2c982-c3b8-479a-ba26-8d027bc3f410",
+  "userUID": "add098ea-2eb3-40b6-bace-6a52ded87a16",
+  "salesItems": [
+    {
+      "quantity": 1,
+      "productName": "百香果特饮",
+      "unitPrice": 88.00,
+      "totalAmount": 88.00,
+      "productUID": "f8d5aff1-61e5-44eb-b435-1cb102c9a20e"
+    }
   ],
-  "storeUID": "26b0ea1b-274d-448a-a73a-9c6424682d9c",
-  "isSubmitType": 1,
-  "supplyPrice": 5,
-  "skuCategoryID": 211938,
-  "sellPoints":,
-  "storeCategoryID": 219741,
-  "barcode": 6901236341582,
-  "mobileDescription": 22,
-  "price": 6,
-  "name": "维达",
-  "salesOutletUID": "9069c0f9-4e1c-4a03-94ec-0370f095cf6b"
+  "payAmount": 99.00,
+  "clientSource": 3,
+  "salesOutletUID": "5d395de6-ecfb-40b3-8938-aa8d088fb7bc"
 }
