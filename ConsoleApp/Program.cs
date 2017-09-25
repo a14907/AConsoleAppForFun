@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using NPOI.OpenXmlFormats.Spreadsheet;
 
 namespace ConsoleApp
 {
@@ -12,12 +14,69 @@ namespace ConsoleApp
         static void Main(string[] args)
         {
             string filename = Path.Combine(Directory.GetCurrentDirectory(), "lgcr.torrent");
+            var data=Torrent.DecodeFile(filename);
+            ShowData(data);
+        }
+
+        private static void ShowData(ItemBase data)
+        {
+            if (data.ItemType == ItemType.Dictionary)
+            {
+                foreach (var kv in (data as DictionaryItem).DictionaryData)
+                {
+                    switch (kv.Value.ItemType)
+                    {
+                        case ItemType.Dictionary:
+                            Console.WriteLine(kv.Key+":");
+                            ShowData(kv.Value);
+                            break;
+                        case ItemType.List:
+                            ShowData(kv.Value);
+                            break;
+                        case ItemType.String:
+                            if (kv.Key == "pieces")
+                            {
+                                break;
+                            }
+                            Console.WriteLine(kv.Key + "=" + (kv.Value as StringItem).StringData);
+                            break;
+                        case ItemType.Number:
+                            Console.WriteLine(kv.Key + "=" + (kv.Value as NumberItem).NumberData);
+                            break;
+                    }
+                }
+            }
+            if (data.ItemType == ItemType.List)
+            {
+                foreach (var i in (data as ListItem).ListData)
+                {
+                    switch (i.ItemType)
+                    {
+                        case ItemType.Dictionary: 
+                        case ItemType.List:
+                            ShowData(i);
+                            break;
+                        case ItemType.String:
+                            Console.WriteLine( (i as StringItem).StringData);
+                            break;
+                        case ItemType.Number:
+                            Console.WriteLine((i as NumberItem).NumberData);
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    public class Torrent
+    {
+        public static ItemBase DecodeFile(string filename)
+        {
             using (var fs = new FileStream(filename, FileMode.Open))
             {
                 using (BinaryReader br = new BinaryReader(fs))
                 {
-                    //le,de,n:str,ie 
-                    var dic = DecodeData(br);
+                    return DecodeData(br);
                 }
             }
         }
@@ -46,7 +105,7 @@ namespace ConsoleApp
 
                     item = itemLs;
                     break;
-                case 'd'://字典
+                case 'd'://字典2
                     br.ReadByte();
                     var itemDic = new DictionaryItem();
                     var key = DecodeData(br);
