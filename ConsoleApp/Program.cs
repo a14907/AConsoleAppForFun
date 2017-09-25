@@ -105,7 +105,7 @@ namespace ConsoleApp
 
                     item = itemLs;
                     break;
-                case 'd'://字典2
+                case 'd'://字典
                     br.ReadByte();
                     var itemDic = new DictionaryItem();
                     var key = DecodeData(br);
