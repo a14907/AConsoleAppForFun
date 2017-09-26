@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using NPOI.OpenXmlFormats.Spreadsheet;
+using Newtonsoft.Json;
 
 namespace ConsoleApp
 {
@@ -13,8 +14,14 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            string filename = Path.Combine(Directory.GetCurrentDirectory(), "lgcr.torrent");
-            var data=Torrent.DecodeFile(filename);
+            if (args.Length != 1)
+            {
+                Console.WriteLine("请指定torrent文件");
+                return;
+            }
+            string filename = args[0];
+            var data = Torrent.DecodeFile(filename);
+            //Console.WriteLine(JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
             ShowData(data);
         }
 
@@ -27,10 +34,11 @@ namespace ConsoleApp
                     switch (kv.Value.ItemType)
                     {
                         case ItemType.Dictionary:
-                            Console.WriteLine(kv.Key+":");
+                            Console.WriteLine(kv.Key + ":");
                             ShowData(kv.Value);
                             break;
                         case ItemType.List:
+                            Console.WriteLine(kv.Key + ":");
                             ShowData(kv.Value);
                             break;
                         case ItemType.String:
@@ -52,12 +60,12 @@ namespace ConsoleApp
                 {
                     switch (i.ItemType)
                     {
-                        case ItemType.Dictionary: 
+                        case ItemType.Dictionary:
                         case ItemType.List:
                             ShowData(i);
                             break;
                         case ItemType.String:
-                            Console.WriteLine( (i as StringItem).StringData);
+                            Console.WriteLine((i as StringItem).StringData);
                             break;
                         case ItemType.Number:
                             Console.WriteLine((i as NumberItem).NumberData);
@@ -81,30 +89,39 @@ namespace ConsoleApp
             }
         }
 
-        private static ItemBase DecodeData(BinaryReader br)
+        private static ItemBase DecodeData(BinaryReader br, Stack<bool> st = null)
         {
-            var flag = br.PeekChar();
-            ItemBase item = null;
+            var flag = br.PeekChar(); 
             List<byte> ls = new List<byte>();
             byte b = 0;
             switch (flag)
             {
                 case 'e':
                     br.ReadByte();
-                    break;
+                    return null;
                 case 'l'://列表
                     br.ReadByte();
-                    var itemLs = new ListItem();
-                    var i = DecodeData(br);
-                    while (i != null && br.BaseStream.Position == br.BaseStream.Length - 2)
+                    var itemLs = new ListItem(); 
+                    ItemBase i = null;
+                    if (st == null)
                     {
-                        var val = DecodeData(br);
-                        itemLs.ListData.Add(i);
-                        i = DecodeData(br);
+                        st = new Stack<bool>();
                     }
+                    st.Push(true);
+                    do
+                    {
+                        i = DecodeData(br, new Stack<bool>());
+                        if (i != null)
+                        {
+                            itemLs.ListData.Add(i);
+                        }
+                        else
+                        {
+                            st.Pop();
+                        }
+                    } while (st.Count != 0 && br.BaseStream.Position != br.BaseStream.Length);
 
-                    item = itemLs;
-                    break;
+                    return itemLs;                    
                 case 'd'://字典
                     br.ReadByte();
                     var itemDic = new DictionaryItem();
@@ -116,8 +133,7 @@ namespace ConsoleApp
                         key = DecodeData(br);
                     }
 
-                    item = itemDic;
-                    break;
+                    return itemDic; 
                 case 'i'://数字
                     br.ReadByte();
                     b = br.ReadByte();
@@ -126,8 +142,7 @@ namespace ConsoleApp
                         ls.Add(b);
                         b = br.ReadByte();
                     }
-                    item = new NumberItem(int.Parse(Encoding.UTF8.GetString(ls.ToArray()))) { RawBytes = ls.ToArray() };
-                    break;
+                    return new NumberItem(long.Parse(Encoding.UTF8.GetString(ls.ToArray()))) { RawBytes = ls.ToArray() };                    
                 default://字符串 
                     b = br.ReadByte();
                     while (b != ':')
@@ -138,16 +153,16 @@ namespace ConsoleApp
                     var len = int.Parse(Encoding.UTF8.GetString(ls.ToArray()));
                     var bufStr = br.ReadBytes(len);
                     var data = Encoding.UTF8.GetString(bufStr);
-                    item = new StringItem(data) { RawBytes = bufStr };
-                    break;
-            }
-            return item;
+                    return new StringItem(data) { RawBytes = bufStr };                    
+            } 
         }
     }
 
     public class ItemBase
     {
+        [JsonIgnore]
         public ItemType ItemType { get; set; }
+        [JsonIgnore]
         public byte[] RawBytes { get; set; }
     }
 
@@ -162,12 +177,12 @@ namespace ConsoleApp
     }
     public class NumberItem : ItemBase
     {
-        public NumberItem(int num)
+        public NumberItem(long num)
         {
             NumberData = num;
             ItemType = ItemType.Number;
         }
-        public int NumberData { get; set; }
+        public long NumberData { get; set; }
     }
 
     public class ListItem : ItemBase
