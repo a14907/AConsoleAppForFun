@@ -12,7 +12,7 @@ namespace ConsoleApp
     /// </summary>
     public class Class1
     {
-        static void Main(string[] args)
+        static void Main2(string[] args)
         {
             if (args.Length != 1)
             {
